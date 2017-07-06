@@ -1,0 +1,49 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+branches:
+  only:
+    - pipeline-branch
+
+build:
+  pre_ci_boot:
+    image_name: drydock/u14jav
+    image_tag: tip
+    pull: true
+    options: -v /etc/hosts:/etc/hosts
+  ci:
+    - ./gradlew :XlowerdashapplicatonnameX-api:uploadArchives -Penv=DEV
+    - ./gradlew :XlowerdashapplicatonnameX-data:uploadArchives -Penv=DEV
+    - ./gradlew :XlowerdashapplicatonnameX-core:uploadArchives -Penv=DEV
+    - ./gradlew :XlowerdashapplicatonnameX-controller:uploadArchives -Penv=DEV
+
+  on_success:
+    - echo versionName=$BRANCH.$BUILD_NUMBER > /build/state/XlowerunderscoreapplicatonnameX_artifacts_dev.env
+
+integrations:
+  hub:
+    - integrationName: xyz-ecr
+      type: ecr
+      region: eu-west-1
+      branches:
+        only:
+          - pipeline-branch
+
+  notifications:
+    - integrationName: xyz-email
+      type: email
+      on_success: always
+      on_failure: always
+      on_pull_request: always
+
+    - integrationName: xyz-slack-integration
+      type: slack
+      recipients:
+        - xyz-shippable-channel
+      branches:
+        only:
+          - pipeline-branch
+      on_success: always
+      on_failure: always
